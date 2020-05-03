@@ -1,0 +1,3 @@
+# modelchecker
+
+cargo run
