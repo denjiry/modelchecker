@@ -7,6 +7,20 @@ type Label = &'static str;
 type Loc = &'static str;
 type Process = Vec<Trans>;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum Formula {
+    False,
+    True,
+    Prop(String),
+    Not(Box<Formula>),
+    And(Box<Formula>, Box<Formula>),
+    Or(Box<Formula>, Box<Formula>),
+    Imp(Box<Formula>, Box<Formula>),
+    EX(Box<Formula>),
+    EU(Box<Formula>, Box<Formula>),
+    EG(Box<Formula>),
+}
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct SharedVars {
     x: i32,
