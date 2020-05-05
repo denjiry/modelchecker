@@ -24,8 +24,8 @@ enum Formula {
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct SharedVars {
     x: i32,
-    t1: i32,
-    t2: i32,
+    y: i32,
+    z: i32,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -220,24 +220,28 @@ fn dotstr2pdf(dotstr: String, filename: String) {
         .expect("fail to execut cmd");
 }
 
+fn make_prop_hash() -> HashMap<String, fn(SharedVars) -> bool> {
+    let mut prop_hash = HashMap::<String, fn(SharedVars) -> bool>::new();
+    prop_hash.insert("x=1".to_string(), |sv| sv.x == 1);
+    prop_hash.insert("y>0".to_string(), |sv| sv.y > 0);
+    prop_hash.insert("z=0".to_string(), |sv| sv.z == 0);
+    prop_hash
+}
+
 fn main() {
-    let p01: fn(SharedVars) -> SharedVars = |sv| SharedVars { t1: sv.x, ..sv };
-    let p12: fn(SharedVars) -> SharedVars = |sv| SharedVars {
-        t1: sv.t1 + 1,
-        ..sv
-    };
-    let p23: fn(SharedVars) -> SharedVars = |sv| SharedVars { x: sv.t1, ..sv };
-    let q01: fn(SharedVars) -> SharedVars = |sv| SharedVars { t2: sv.x, ..sv };
-    let q12: fn(SharedVars) -> SharedVars = |sv| SharedVars {
-        t2: sv.t2 + 1,
-        ..sv
-    };
-    let q23: fn(SharedVars) -> SharedVars = |sv| SharedVars { x: sv.t2, ..sv };
+    let p01: fn(SharedVars) -> SharedVars = |sv| SharedVars { y: sv.x, ..sv };
+    let p12: fn(SharedVars) -> SharedVars = |sv| SharedVars { y: sv.y + 1, ..sv };
+    let p23: fn(SharedVars) -> SharedVars = |sv| SharedVars { x: sv.y, ..sv };
+    let q01: fn(SharedVars) -> SharedVars = |sv| SharedVars { z: sv.x, ..sv };
+    let q12: fn(SharedVars) -> SharedVars = |sv| SharedVars { z: sv.z + 1, ..sv };
+    let q23: fn(SharedVars) -> SharedVars = |sv| SharedVars { x: sv.z, ..sv };
     let tt: fn(SharedVars) -> bool = trans_true;
+    let formula = Formula::Prop("x=1".to_string());
+    let prop_hash = make_prop_hash();
     let process_p = vec![
-        Trans::new("P0", "read", "P1", tt, p01),
-        Trans::new("P1", "inc", "P2", tt, p12),
-        Trans::new("P2", "write", "P3", tt, p23),
+        Trans::new("P0", "x=1", "P1", tt, p01),
+        Trans::new("P1", "y=1", "P2", tt, p12),
+        Trans::new("P2", "z=1", "P3", tt, p23),
     ];
     let process_q = vec![
         Trans::new("Q0", "read", "Q1", tt, q01),
@@ -249,12 +253,12 @@ fn main() {
     let dot_q = print_process(&process_q);
     dotstr2pdf(dot_q, "q".to_string());
 
-    let r0 = SharedVars { x: 0, t1: 0, t2: 0 };
+    let r0 = SharedVars { x: 0, y: 0, z: 0 };
     let ps = vec![process_p, process_q];
     let (htable, deadlocks) = concurrent_composition(r0, ps);
     print_deadlocks(deadlocks);
 
-    let svprinter = |sv: SharedVars| format!("\\n x={} t1={} t2={}\",", sv.x, sv.t1, sv.t2);
+    let svprinter = |sv: SharedVars| format!("\\n x={} y={} z={}\",", sv.x, sv.y, sv.z);
     let dot = viz_lts(htable, svprinter);
     dotstr2pdf(dot, "dead".to_string());
 }
