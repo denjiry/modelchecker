@@ -228,6 +228,17 @@ fn make_prop_hash() -> HashMap<String, fn(SharedVars) -> bool> {
     prop_hash
 }
 
+fn make_formula() -> Formula {
+    use Formula::*;
+    Or(
+        Box::new(And(
+            Box::new(Prop("x=1".to_string())),
+            Box::new(Prop("y>0".to_string())),
+        )),
+        Box::new(Not(Box::new(Prop("z=0".to_string())))),
+    )
+}
+
 fn main() {
     let p01: fn(SharedVars) -> SharedVars = |sv| SharedVars { y: sv.x, ..sv };
     let p12: fn(SharedVars) -> SharedVars = |sv| SharedVars { y: sv.y + 1, ..sv };
@@ -236,7 +247,7 @@ fn main() {
     let q12: fn(SharedVars) -> SharedVars = |sv| SharedVars { z: sv.z + 1, ..sv };
     let q23: fn(SharedVars) -> SharedVars = |sv| SharedVars { x: sv.z, ..sv };
     let tt: fn(SharedVars) -> bool = trans_true;
-    let formula = Formula::Prop("x=1".to_string());
+    let formula = make_formula();
     let prop_hash = make_prop_hash();
     let process_p = vec![
         Trans::new("P0", "x=1", "P1", tt, p01),
@@ -254,11 +265,11 @@ fn main() {
     dotstr2pdf(dot_q, "q".to_string());
 
     let r0 = SharedVars { x: 0, y: 0, z: 0 };
-    let ps = vec![process_p, process_q];
+    let ps = vec![process_p];
     let (htable, deadlocks) = concurrent_composition(r0, ps);
     print_deadlocks(deadlocks);
 
     let svprinter = |sv: SharedVars| format!("\\n x={} y={} z={}\",", sv.x, sv.y, sv.z);
-    let dot = viz_lts(htable, svprinter);
-    dotstr2pdf(dot, "dead".to_string());
+    let dotstr = viz_lts(htable, svprinter);
+    dotstr2pdf(dotstr, "marked".to_string());
 }
