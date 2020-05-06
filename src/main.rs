@@ -239,6 +239,18 @@ fn make_formula() -> Formula {
     )
 }
 
+fn enum_formula(formula: Formula) -> Vec<Formula> {
+    Vec::<Formula>::new()
+}
+
+fn mark(
+    htable: HashMap<State, (usize, Path)>,
+    prop_hash: HashMap<String, fn(SharedVars) -> bool>,
+    formula: Formula,
+) {
+    let fs = enum_formula(formula);
+}
+
 fn main() {
     let p01: fn(SharedVars) -> SharedVars = |sv| SharedVars { y: sv.x, ..sv };
     let p12: fn(SharedVars) -> SharedVars = |sv| SharedVars { y: sv.y + 1, ..sv };
